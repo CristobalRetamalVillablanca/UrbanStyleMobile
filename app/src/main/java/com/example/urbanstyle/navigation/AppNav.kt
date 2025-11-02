@@ -1,18 +1,17 @@
 package com.example.urbanstyle.navigation
 
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.example.urbanstyle.login.LoginScreen
-import com.example.urbanstyle.ui.components.BottomBar
+import com.example.urbanstyle.ui.HomeScreen
+import com.example.urbanstyle.ui.ProductosScreen
+import com.example.urbanstyle.ui.ProductoDetalleScreen
+import com.example.urbanstyle.data.repository.ProductoRepository
+import com.example.urbanstyle.navigation.Rutas
 
 object Rutas {
     const val LOGIN = "login"
@@ -21,51 +20,33 @@ object Rutas {
     const val BLOG = "blog"
     const val NOSOTROS = "nosotros"
     const val CARRITO = "carrito"
+
+    const val PRODUCTO_DETALLE = "producto/{codigo}"
+    const val ARG_CODIGO = "codigo"
 }
 
 @Composable
 fun AppNav(navController: NavHostController) {
     NavHost(
         navController = navController,
-        startDestination = Rutas.LOGIN   // Arranca en Login como pediste
+        startDestination = Rutas.LOGIN
     ) {
-        composable(Rutas.LOGIN) {
-            LoginScreen(navController = navController)
-        }
+        composable(Rutas.LOGIN) { LoginScreen(navController = navController) }
+        composable(Rutas.HOME) { HomeScreen(navController = navController) }
+        composable(Rutas.PRODUCTOS) { ProductosScreen(navController = navController) }
 
-        composable(Rutas.HOME) {
-            PageScaffold(titulo = "Inicio", navController = navController)
-        }
-        composable(Rutas.PRODUCTOS) {
-            PageScaffold(titulo = "Productos", navController = navController)
-        }
-        composable(Rutas.BLOG) {
-            PageScaffold(titulo = "Blog", navController = navController)
-        }
-        composable(Rutas.NOSOTROS) {
-            PageScaffold(titulo = "Nosotros", navController = navController)
-        }
-        composable(Rutas.CARRITO) {
-            PageScaffold(titulo = "Carrito (en desarrollo 🛒)", navController = navController)
-        }
-    }
-}
-
-@Composable
-private fun PageScaffold(
-    titulo: String,
-    navController: NavHostController
-) {
-    Scaffold(
-        bottomBar = { BottomBar(navController = navController) }
-    ) { inner ->
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = titulo,
-                style = MaterialTheme.typography.titleLarge
+        // Detalle
+        composable(
+            route = Rutas.PRODUCTO_DETALLE,
+            arguments = listOf(navArgument(Rutas.ARG_CODIGO) { type = NavType.StringType })
+        ) { backStack ->
+            val codigo = backStack.arguments?.getString(Rutas.ARG_CODIGO).orEmpty()
+            val repo = ProductoRepository()
+            val producto = runCatching { repo.porCodigo(codigo) }.getOrNull()
+            ProductoDetalleScreen(
+                navController = navController,
+                producto = producto,
+                codigo = codigo
             )
         }
     }

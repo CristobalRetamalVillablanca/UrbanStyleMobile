@@ -5,7 +5,8 @@ import com.example.urbanstyle.data.model.Producto
 
 class ProductoRepository {
 
-    fun obtenerProductos(): List<Producto> = listOf(
+    // 🔵 ÚNICA fuente de datos del repositorio
+    private val catalogo: List<Producto> = listOf(
         // TORTAS
         Producto(
             codigo = "TC001",
@@ -98,7 +99,7 @@ class ProductoRepository {
             descripcion = "Mousse aireado de chocolate belga con cobertura de cacao amargo."
         ),
 
-        // PANES Y GALLETAS
+        // PANADERÍA
         Producto(
             codigo = "PG001",
             nombre = "Galletas de Avena",
@@ -133,19 +134,23 @@ class ProductoRepository {
         )
     )
 
-    // Productos destacados
+    // Compatibilidad (si en alguna parte llaman a esto)
+    fun obtenerProductos(): List<Producto> = catalogo
+
+    // Catálogo completo
+    fun obtenerTodos(): List<Producto> = catalogo
+
+    // Destacados (elige algunos del catálogo)
     fun obtenerDestacados(): List<Producto> = listOf(
-        obtenerProductos()[0], // Torta de Chocolate
-        obtenerProductos()[1], // Torta de Vainilla
-        obtenerProductos()[9], // Cheesecake
-        obtenerProductos()[11] // Brownie
+        catalogo.first { it.codigo == "TC001" }, // Chocolate
+        catalogo.first { it.codigo == "TC002" }, // Vainilla
+        catalogo.first { it.codigo == "PI001" }, // Cheesecake
+        catalogo.first { it.codigo == "PG004" }  // Brownie
     )
 
     // Categorías únicas
-    fun obtenerCategorias(): List<String> = obtenerProductos()
-        .map { it.categoria }
-        .distinct()
+    fun obtenerCategorias(): List<String> = catalogo.map { it.categoria }.distinct()
 
-    fun porCodigo(codigo: String): Producto =
-        obtenerProductos().first { it.codigo == codigo }
+    // Búsqueda por código (segura)
+    fun porCodigo(codigo: String): Producto? = catalogo.find { it.codigo == codigo }
 }
