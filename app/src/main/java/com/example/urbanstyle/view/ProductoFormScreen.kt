@@ -1,32 +1,11 @@
 package com.example.urbanstyle.view
 
-
-
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-
-import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -36,129 +15,254 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.urbanstyle.R
 import com.example.urbanstyle.data.model.Producto
 import com.example.urbanstyle.viewmodel.ProductoViewModel
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-
 fun ProductoFormScreen(
     navController: NavController,
-    nombre:String,
-    precio:String
-){// Inicio
+    vm: ProductoViewModel = viewModel()
+) {
+    // Campos del formulario
+    var codigo by remember { mutableStateOf(TextFieldValue("")) }
+    var nombre by remember { mutableStateOf(TextFieldValue("")) }
+    var categoria by remember { mutableStateOf(TextFieldValue("")) }
+    var precioTexto by remember { mutableStateOf(TextFieldValue("")) }
+    var descripcion by remember { mutableStateOf(TextFieldValue("")) }
 
-    var cantidad by remember{ mutableStateOf(TextFieldValue("")) }
-    var direccion by remember{ mutableStateOf(TextFieldValue("")) }
+    // Selector de imagen (drawable) con menú
+    data class OpcionImagen(val etiqueta: String, val resId: Int)
+    val opcionesImagen = listOf(
+        OpcionImagen("Torta Chocolate", R.drawable.torta_chocolate),
+        OpcionImagen("Torta Vainilla", R.drawable.torta_vainilla),
+        OpcionImagen("Torta Frutas", R.drawable.torta_frutas),
+        OpcionImagen("Torta Manjar", R.drawable.torta_manjar),
+        OpcionImagen("Torta Naranja", R.drawable.torta_naranja),
+        OpcionImagen("Torta Vegana", R.drawable.torta_vegana),
+        OpcionImagen("Torta Cumpleaños", R.drawable.torta_cumpleanos),
+        OpcionImagen("Torta Boda", R.drawable.torta_boda),
+        OpcionImagen("Cheesecake", R.drawable.cheesecake),
+        OpcionImagen("Tiramisú", R.drawable.tiramisu),
+        OpcionImagen("Mousse Chocolate", R.drawable.mousse_chocolate),
+        OpcionImagen("Galletas Avena", R.drawable.galletas_avena),
+        OpcionImagen("Empanada Manzana", R.drawable.empanada_manzana),
+        OpcionImagen("Pan Sin Gluten", R.drawable.pan_sin_gluten),
+        OpcionImagen("Brownie", R.drawable.brownie),
+    )
+    var imagenSeleccionada by remember { mutableStateOf(opcionesImagen.first()) }
+    var menuImagenExpandido by remember { mutableStateOf(false) }
 
-    // utilizar ViewModel
-    val viewModel : ProductoViewModel =viewModel()
+    // Observa lista guardada
+    val productosGuardados by vm.productos.collectAsState()
 
-    // observar directamente los productos
-    val productos:List<Producto> by viewModel.productos.collectAsState()
+    // Validaciones
+    val precioEsEntero = precioTexto.text.toIntOrNull()
+    val hayErroresPrecio = precioTexto.text.isNotBlank() && precioEsEntero == null
+    val formularioValido =
+        codigo.text.isNotBlank() &&
+                nombre.text.isNotBlank() &&
+                categoria.text.isNotBlank() &&
+                !hayErroresPrecio &&
+                descripcion.text.isNotBlank()
 
-    Scaffold (
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(title = { Text("Nuevo Producto") })
+        },
         bottomBar = {
             BottomAppBar {
-                // Contenido Barra superior
-            } // fin Bootom App
-        }// fin bottom
-
-    ) // fin Scaffold
-
-    {// inicio inner
-            innerPadding ->
+                Text(
+                    "Pastelería Mil Sabores",
+                    modifier = Modifier.padding(16.dp),
+                    style = MaterialTheme.typography.labelLarge
+                )
+            }
+        }
+    ) { inner ->
         Column(
             modifier = Modifier
-                .padding(innerPadding)
+                .padding(inner)
                 .padding(16.dp)
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
-        )// fin Column
-        { // Inicio Contenido
+        ) {
 
+            // Vista previa de imagen seleccionada
             Image(
-                painter= painterResource(id= android.R.drawable.ic_menu_gallery),
-                contentDescription = "Imagen Producto",
-                modifier=Modifier
-                    .height(150.dp)
+                painter = painterResource(id = imagenSeleccionada.resId),
+                contentDescription = imagenSeleccionada.etiqueta,
+                modifier = Modifier
+                    .height(160.dp)
                     .fillMaxWidth()
-            )// fin Image
+            )
 
-            Spacer(modifier =Modifier.height(16.dp))
+            Spacer(Modifier.height(12.dp))
 
-            Text(text=nombre, style= MaterialTheme.typography.headlineSmall)
-            Text(text="Precio: $precio", style= MaterialTheme.typography.bodyLarge)
-
-            Spacer(modifier =Modifier.height(16.dp))
-
-
+            // Código
             OutlinedTextField(
-                value=cantidad,
-                onValueChange = {cantidad = it},
-                //OutlinedTextField es un componente de entrada de texto
-                // se utiliza para permitir que el usuario ingrese un valor.
+                value = codigo,
+                onValueChange = { codigo = it },
+                label = { Text("Código del producto (p.ej. TC001)") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+            )
 
-                label ={Text("Cantidad")},
-                modifier = Modifier.fillMaxWidth()
-            ) // fin cantidad
-
+            // Nombre
             OutlinedTextField(
-                value=direccion,
-                onValueChange = {direccion = it},
-                //OutlinedTextField es un componente de entrada de texto
-                // se utiliza para permitir que el usuario ingrese un valor.
+                value = nombre,
+                onValueChange = { nombre = it },
+                label = { Text("Nombre") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+            )
 
-                label ={Text("Direccion")},
-                modifier = Modifier.fillMaxWidth()
-            ) // fin direccion
+            // Categoría
+            OutlinedTextField(
+                value = categoria,
+                onValueChange = { categoria = it },
+                label = { Text("Categoría (Tortas, Postres, Panadería...)") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+            )
 
-
-
-            Spacer(modifier =Modifier.height(16.dp))
-
-            Button(
-                onClick = {  // define los campos a pasar
-                    val producto =Producto(
-                        nombre = nombre,
-                        precio=precio,
-                        cantidad= cantidad.text,
-                        direccion=direccion.text
-                    )
-                    viewModel.guardarProducto(producto)
-
-                    // Limpiar Formulario
-                    cantidad = TextFieldValue("")
-                    direccion = TextFieldValue("")
+            // Precio (entero CLP)
+            OutlinedTextField(
+                value = precioTexto,
+                onValueChange = { precioTexto = it },
+                label = { Text("Precio (CLP)") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                isError = hayErroresPrecio,
+                supportingText = {
+                    if (hayErroresPrecio) Text("Debe ser un número entero (sin puntos).")
                 },
-                enabled=cantidad.text.isNotBlank() && direccion.text.isNotBlank()
-            ) // fin Button
-            { // inicio texto
-                Text("Confirmar Pedido")
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Next
+                )
+            )
 
-            }// fin texto
+            // Selector de imagen (ExposedDropdownMenu)
+            Spacer(Modifier.height(8.dp))
+            ExposedDropdownMenuBox(
+                expanded = menuImagenExpandido,
+                onExpandedChange = { menuImagenExpandido = !menuImagenExpandido },
+            ) {
+                OutlinedTextField(
+                    value = imagenSeleccionada.etiqueta,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Imagen (drawable)") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = menuImagenExpandido) },
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = menuImagenExpandido,
+                    onDismissRequest = { menuImagenExpandido = false }
+                ) {
+                    opcionesImagen.forEach { opcion ->
+                        DropdownMenuItem(
+                            text = { Text(opcion.etiqueta) },
+                            onClick = {
+                                imagenSeleccionada = opcion
+                                menuImagenExpandido = false
+                            }
+                        )
+                    }
+                }
+            }
 
-            Spacer(modifier =Modifier.height(16.dp))
+            // Descripción
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = descripcion,
+                onValueChange = { descripcion = it },
+                label = { Text("Descripción") },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 3
+            )
 
-            // Mostrar los datos guardados
+            Spacer(Modifier.height(16.dp))
 
-            Text("Pedidos Realizados: ",style = MaterialTheme.typography.headlineSmall)
+            // Botón guardar
+            Button(
+                onClick = {
+                    val producto = Producto(
+                        codigo = codigo.text.trim(),
+                        nombre = nombre.text.trim(),
+                        categoria = categoria.text.trim(),
+                        precio = precioEsEntero ?: 0,
+                        imagenRes = imagenSeleccionada.resId,
+                        descripcion = descripcion.text.trim()
+                    )
+                    vm.guardarProducto(producto)
 
+                    // Limpia formulario
+                    codigo = TextFieldValue("")
+                    nombre = TextFieldValue("")
+                    categoria = TextFieldValue("")
+                    precioTexto = TextFieldValue("")
+                    descripcion = TextFieldValue("")
+                },
+                enabled = formularioValido,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Guardar producto")
+            }
 
-        } //Fin Contenido
+            Spacer(Modifier.height(16.dp))
 
-    } // fin inner
+            // Lista de productos guardados (preview simple)
+            Text("Productos guardados:", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(8.dp))
 
-}//fin
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(productosGuardados) { p ->
+                    ElevatedCard {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Image(
+                                painter = painterResource(id = p.imagenRes),
+                                contentDescription = p.nombre,
+                                modifier = Modifier
+                                    .size(56.dp)
+                                    .padding(end = 12.dp)
+                            )
+                            Column(Modifier.weight(1f)) {
+                                Text("${p.codigo} — ${p.nombre}", style = MaterialTheme.typography.titleSmall)
+                                Text(p.categoria, style = MaterialTheme.typography.labelMedium)
+                                Text("CLP ${p.precio}", style = MaterialTheme.typography.bodyMedium)
+                            }
+                        }
+                    }
+                }
+            }
 
+            Spacer(Modifier.height(24.dp))
+        }
+    }
+}
 
 @Preview(showBackground = true)
 @Composable
-fun PreviewProductoFormScreen() {
-    // Preview básico para testing
-    ProductoFormScreen(
-        navController = rememberNavController(),
-        nombre = "Producto Ejemplo",
-        precio = "$10.00"
-    )
+private fun PreviewProductoFormScreen() {
+    ProductoFormScreen(navController = rememberNavController())
 }
