@@ -206,7 +206,7 @@ fun NosotrosScreen(navController: NavHostController) {
                     elevation = CardDefaults.elevatedCardElevation(2.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(Modifier.padding(6.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text("Nuestros Valores",
                             style = MaterialTheme.typography.titleLarge,
                             fontFamily = pacifico,
