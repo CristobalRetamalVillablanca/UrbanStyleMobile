@@ -17,6 +17,7 @@ import com.example.urbanstyle.data.repository.ProductoRepository
 import com.example.urbanstyle.data.repository.BlogRepository
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.unit.dp
+import com.example.urbanstyle.navigation.Rutas
 
 object Rutas {
     const val LOGIN = "login"
@@ -37,7 +38,7 @@ object Rutas {
 fun AppNav(navController: NavHostController) {
     NavHost(
         navController = navController,
-        startDestination = Rutas.HOME
+        startDestination = Rutas.LOGIN
     ) {
         // ---------- LOGIN ----------
         composable(Rutas.LOGIN) { LoginScreen(navController = navController) }
