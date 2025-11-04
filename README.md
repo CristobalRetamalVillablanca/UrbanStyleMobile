@@ -14,8 +14,6 @@ Permite explorar productos, leer artículos del blog, conocer la historia de la 
 - 📰 **Sección Blog** con artículos informativos y pantalla de detalle.  
 - 🏢 **Sección Nosotros** con historia, misión, visión, valores y equipo.  
 - 🔐 **Login** con modo Administrador (usuario `Admin`, contraseña `Hola`).  
-- ⚙️ **Modo Admin** con opciones de agregar/eliminar productos, ver ventas simuladas y pedidos.  
-- 💾 **Persistencia temporal simulada** con almacenamiento local en memoria.  
 - 🎨 **Diseño Material 3** con tipografía *Pacifico* y paleta de colores institucional (crema, rosa y chocolate).  
 
 ---
