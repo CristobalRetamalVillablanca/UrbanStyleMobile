@@ -2,7 +2,7 @@
 
 > “Cada dulce cuenta una historia.” 🍰  
 Aplicación móvil desarrollada en **Kotlin** con **Jetpack Compose**, inspirada en la pastelería chilena *Mil Sabores*.  
-Permite explorar productos, leer artículos del blog, conocer la historia de la marca y, en modo administrador, gestionar productos, ventas y pedidos simulados.
+Permite explorar productos, leer artículos del blog, conocer la historia de la marca.
 
 ---
 
