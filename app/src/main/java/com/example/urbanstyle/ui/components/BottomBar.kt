@@ -3,6 +3,7 @@ package com.example.urbanstyle.ui.components
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Article
 import androidx.compose.material.icons.filled.Cake
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
@@ -37,6 +38,7 @@ fun BottomBar(navController: NavHostController) {
         NavItem(Rutas.NOSOTROS, "Nosotros", Icons.Filled.Info),
         NavItem(Rutas.LOGIN, "Login", Icons.Filled.Lock),
         NavItem(Rutas.CARRITO, "Carrito", Icons.Filled.ShoppingCart),
+        NavItem(Rutas.CAMERA, "Escanear QR", Icons.Filled.CameraAlt),
     )
 
     val backStackEntry by navController.currentBackStackEntryAsState()
