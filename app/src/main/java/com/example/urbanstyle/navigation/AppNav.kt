@@ -19,21 +19,26 @@ import com.example.urbanstyle.ui.BlogScreen
 import com.example.urbanstyle.ui.BlogDetalleScreen
 import com.example.urbanstyle.ui.NosotrosScreen
 import com.example.urbanstyle.utils.CameraPermissionHelper
-import com.example.urbanstyle.data.repository.ProductoRepository
 import com.example.urbanstyle.data.repository.BlogRepository
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.urbanstyle.data.database.BaseDeDatos
+import com.example.urbanstyle.data.repository.ProductoRepository
 import com.example.urbanstyle.navigation.Rutas
 import com.example.urbanstyle.ui.QrScannerScreen
+import com.example.urbanstyle.ui.registro.RegistroScreen
 import com.example.urbanstyle.viewmodel.QrViewModel
 
 object Rutas {
     const val LOGIN = "login"
+
+    const val REGISTRO = "registro"
     const val HOME = "home"
     const val PRODUCTOS = "productos"
 
@@ -50,7 +55,6 @@ object Rutas {
 
 @Composable
 fun AppNav(navController: NavHostController) {
-
     val context = LocalContext.current
 
     var hasCameraPermission by rememberSaveable {
@@ -72,6 +76,8 @@ fun AppNav(navController: NavHostController) {
     ) {
         // ---------- LOGIN ----------
         composable(Rutas.LOGIN) { LoginScreen(navController = navController) }
+        // ---------- REGISTRO ----------
+        composable(Rutas.REGISTRO) { RegistroScreen(navController = navController) }
 
         // ---------- HOME ----------
         composable(Rutas.HOME) { HomeScreen(navController = navController) }

@@ -1,6 +1,7 @@
 package com.example.urbanstyle.data.repository
 
 import com.example.urbanstyle.R
+import com.example.urbanstyle.data.dao.ProductoDao
 import com.example.urbanstyle.data.model.Producto
 
 class ProductoRepository {

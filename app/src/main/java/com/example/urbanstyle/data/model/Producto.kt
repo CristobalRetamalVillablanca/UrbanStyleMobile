@@ -6,7 +6,7 @@ import androidx.annotation.DrawableRes
 
 @Entity(tableName = "productos")
 data class Producto(
-    @PrimaryKey(autoGenerate = true)
+    @PrimaryKey
     val codigo: String,
     val nombre: String,
     val categoria: String,

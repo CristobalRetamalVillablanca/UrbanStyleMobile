@@ -2,6 +2,7 @@ package com.example.urbanstyle.login
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -137,6 +138,15 @@ fun LoginScreen(
                 ) {
                     Text(if (state.isLoading) "Validando..." else "Iniciar Sesión")
                 }
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = "Registrarse",
+                    modifier = Modifier.clickable {
+                        navController.navigate("registro") // Asumiendo que la ruta es "registro"
+                    },
+                    color = MaterialTheme.colorScheme.primary, // Color de acento
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }

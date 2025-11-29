@@ -26,7 +26,7 @@ class LoginViewModel(private val repo: AuthRepository = AuthRepository()): ViewM
 
         uiState =uiState.copy(isLoading=false)
 
-        if(oK) onSuccess(uiState.username.trim())
+        if(oK != null) onSuccess(uiState.username.trim())
         else uiState =uiState.copy(error="Credenciales Invalidas")
     }
 }

@@ -2,8 +2,10 @@ package com.example.urbanstyle.data.repository
 
 import com.example.urbanstyle.data.model.Credential
 
-class AuthRepository(private val validCredential: Credential =Credential.Admin) {
-    fun login(username:String,password:String):Boolean{
-        return username == validCredential.username && password == validCredential.password
+class AuthRepository(private val validCredential:List<Credential> = listOf(Credential.Admin, Credential.Cliente)) {
+    fun login(nombre: String, clave: String): Credential? {
+        return validCredential.find {
+            it.username == nombre && it.password == clave
+        }
     }
 }
