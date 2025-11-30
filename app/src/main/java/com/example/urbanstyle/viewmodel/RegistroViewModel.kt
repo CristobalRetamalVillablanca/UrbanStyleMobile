@@ -18,14 +18,14 @@ import kotlinx.coroutines.launch
 import com.example.urbanstyle.utils.regionesDeChile
 import com.example.urbanstyle.utils.obtenerComunas
 
-class   RegistroViewModel(application: Application) : AndroidViewModel(application) {
+open class   RegistroViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: UsuarioRepository
 
-    private val _uiState = MutableStateFlow(RegistroUiState())
-    val uiState: StateFlow<RegistroUiState> = _uiState.asStateFlow()
+    open val _uiState = MutableStateFlow(RegistroUiState())
+    open val uiState: StateFlow<RegistroUiState> = _uiState.asStateFlow()
 
-    val regiones: List<String> = regionesDeChile
-    val comunas: StateFlow<List<String>> = MutableStateFlow(emptyList())
+    open val regiones: List<String> = regionesDeChile
+    open val comunas: StateFlow<List<String>> = MutableStateFlow(emptyList())
 
     init {
         val usuarioDao = BaseDeDatos.getDatabase(application).usuarioDao()
@@ -33,45 +33,45 @@ class   RegistroViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     // --- Eventos de la UI ---
-    fun onNombreChange(nuevoNombre: String) {
+    open fun onNombreChange(nuevoNombre: String) {
         _uiState.update { it.copy(nombreCompleto = nuevoNombre) }
         validarNombre()
     }
 
-    fun onFechaNacimientoChange(nuevaFecha: String) {
+    open fun onFechaNacimientoChange(nuevaFecha: String) {
         _uiState.update { it.copy(fechaNacimiento = nuevaFecha) }
     }
 
-    fun onCorreoChange(nuevoCorreo: String) {
+    open fun onCorreoChange(nuevoCorreo: String) {
         _uiState.update { it.copy(correo = nuevoCorreo) }
         validarCorreo()
     }
 
-    fun onContrasenaChange(nuevaContrasena: String) {
+    open fun onContrasenaChange(nuevaContrasena: String) {
         _uiState.update { it.copy(contrasena = nuevaContrasena) }
         validarContrasena()
         validarConfirmarContrasena()
     }
 
-    fun onConfirmarContrasenaChange(nuevaConfirmacion: String) {
+    open fun onConfirmarContrasenaChange(nuevaConfirmacion: String) {
         _uiState.update { it.copy(confirmarContrasena = nuevaConfirmacion) }
         validarConfirmarContrasena()
     }
 
-    fun onTelefonoChange(nuevoTelefono: String) {
+    open fun onTelefonoChange(nuevoTelefono: String) {
         _uiState.update { it.copy(telefono = nuevoTelefono) }
     }
 
-    fun onRegionSelected(nuevaRegion: String) {
+    open fun onRegionSelected(nuevaRegion: String) {
         _uiState.update { it.copy(region = nuevaRegion, comuna = "") }
         (comunas as MutableStateFlow).value = obtenerComunas(nuevaRegion)
     }
 
-    fun onComunaSelected(nuevaComuna: String) {
+    open fun onComunaSelected(nuevaComuna: String) {
         _uiState.update { it.copy(comuna = nuevaComuna) }
     }
 
-    fun onCodigoDescuentoChange(nuevoCodigo: String) {
+    open fun onCodigoDescuentoChange(nuevoCodigo: String) {
         _uiState.update { it.copy(codigoDescuento = nuevoCodigo) }
     }
 
@@ -132,7 +132,7 @@ class   RegistroViewModel(application: Application) : AndroidViewModel(applicati
                 currentState.comuna.isNotBlank()
     }
 
-    fun registrarUsuario() {
+    open fun registrarUsuario() {
         if (!validarFormulario()) {
             Toast.makeText(getApplication(), "Por favor, corrige los errores.", Toast.LENGTH_SHORT).show()
             return
