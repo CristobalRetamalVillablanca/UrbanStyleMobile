@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -15,9 +17,12 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import androidx.lifecycle.viewmodel.compose.viewModel // Importante
 import com.example.urbanstyle.R
 import com.example.urbanstyle.data.model.Producto
 import com.example.urbanstyle.ui.components.BottomBar
+import com.example.urbanstyle.ui.cart.CartViewModel // Importamos el ViewModel
+import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -26,10 +31,16 @@ import java.util.Locale
 fun ProductoDetalleScreen(
     navController: NavHostController,
     producto: Producto?,
-    codigo: String
+    codigo: String,
+    // INYECCIÓN: Recibimos el carrito para poder usarlo
+    cartViewModel: CartViewModel = viewModel()
 ) {
     val pacifico = FontFamily(Font(R.font.pacifico))
     val clp = NumberFormat.getCurrencyInstance(Locale("es", "CL"))
+
+    // Estados para la notificación visual (Snackbar)
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -43,7 +54,9 @@ fun ProductoDetalleScreen(
                 }
             )
         },
-        bottomBar = { BottomBar(navController = navController) }
+        bottomBar = { BottomBar(navController = navController) },
+        // Agregamos el host para mostrar mensajes emergentes
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { inner ->
         if (producto == null) {
             Box(
@@ -81,10 +94,24 @@ fun ProductoDetalleScreen(
 
             Text(producto.descripcion, style = MaterialTheme.typography.bodyLarge)
 
+            Spacer(modifier = Modifier.weight(1f)) // Empuja los botones hacia abajo si sobra espacio
+
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-                Button(onClick = { /* TODO carrito */ }, modifier = Modifier.weight(1f)) {
+                // BOTÓN CONECTADO
+                Button(
+                    onClick = {
+                        // 1. Agregamos al carrito
+                        cartViewModel.agregarProducto(producto)
+                        // 2. Mostramos confirmación visual
+                        scope.launch {
+                            snackbarHostState.showSnackbar("¡${producto.nombre} agregado al carrito!")
+                        }
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
                     Text("Agregar al carrito")
                 }
+
                 OutlinedButton(onClick = { navController.popBackStack() }, modifier = Modifier.weight(1f)) {
                     Text("Volver")
                 }

@@ -131,6 +131,21 @@ fun HomeScreen(navController: NavHostController) {
                     clp = clp
                 )
             }
+
+            item {
+                Spacer(modifier = Modifier.height(16.dp)) // Espacio extra antes del botón
+                Button(
+                    onClick = {
+                        // Asegúrate de tener definida esta ruta en tu NavHost
+                        navController.navigate(Rutas.API_EXTERNA)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                ) {
+                    Text("Ir a Posts")
+                }
+            }
+
         }
     }
 }

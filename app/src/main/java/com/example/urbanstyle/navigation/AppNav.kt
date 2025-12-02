@@ -17,6 +17,9 @@ import com.example.urbanstyle.ui.ProductosScreen
 import com.example.urbanstyle.ui.ProductoDetalleScreen
 import com.example.urbanstyle.ui.BlogScreen
 import com.example.urbanstyle.ui.BlogDetalleScreen
+import com.example.urbanstyle.ui.cart.CartScreen
+import com.example.urbanstyle.ui.cart.CartViewModel
+
 import com.example.urbanstyle.ui.NosotrosScreen
 import com.example.urbanstyle.utils.CameraPermissionHelper
 import com.example.urbanstyle.data.repository.BlogRepository
@@ -28,11 +31,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.rememberNavController
 import com.example.urbanstyle.data.database.BaseDeDatos
 import com.example.urbanstyle.data.repository.ProductoRepository
 import com.example.urbanstyle.navigation.Rutas
 import com.example.urbanstyle.ui.QrScannerScreen
+import com.example.urbanstyle.ui.post.PostScreen
 import com.example.urbanstyle.ui.registro.RegistroScreen
+import com.example.urbanstyle.ui.theme.ApiRestTheme
+import com.example.urbanstyle.viewmodel.PostViewModel
 import com.example.urbanstyle.viewmodel.QrViewModel
 
 object Rutas {
@@ -45,6 +52,7 @@ object Rutas {
     const val BLOG = "blog"                // Lista
     const val BLOG_DETALLE = "blog/{id}"   // Detalle
 
+    const val API_EXTERNA ="api"
     const val NOSOTROS = "nosotros"
     const val CARRITO = "carrito"
     const val CAMERA = "Escanear QR"
@@ -54,7 +62,7 @@ object Rutas {
 }
 
 @Composable
-fun AppNav(navController: NavHostController) {
+fun AppNav(navController: NavHostController = rememberNavController(),cartViewModel: CartViewModel = viewModel()) {
     val context = LocalContext.current
 
     var hasCameraPermission by rememberSaveable {
@@ -78,6 +86,14 @@ fun AppNav(navController: NavHostController) {
         composable(Rutas.LOGIN) { LoginScreen(navController = navController) }
         // ---------- REGISTRO ----------
         composable(Rutas.REGISTRO) { RegistroScreen(navController = navController) }
+
+        //------------ApiExterna-------
+        composable(Rutas.API_EXTERNA){
+            val postViewModel: PostViewModel = viewModel()
+            ApiRestTheme {
+                PostScreen(viewModel = postViewModel)
+            }
+        }
 
         // ---------- HOME ----------
         composable(Rutas.HOME) { HomeScreen(navController = navController) }
@@ -131,17 +147,9 @@ fun AppNav(navController: NavHostController) {
                 }
             )
         }
+        // ---------- CARRITO ----------
+        composable(Rutas.CARRITO) { CartScreen(navController = navController, cartViewModel = cartViewModel) }
 
-        // ---------- CARRITO (placeholder) ----------
-        composable(Rutas.CARRITO) {
-            androidx.compose.material3.Scaffold { inner ->
-                androidx.compose.material3.Text(
-                    text = "Carrito en desarrollo 🛒",
-                    modifier = androidx.compose.ui.Modifier
-                        .padding(inner)
-                        .padding(24.dp)
-                )
-            }
-        }
+
     }
 }
