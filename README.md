@@ -1,12 +1,15 @@
 # 🧁 Pastelería Mil Sabores — Aplicación Móvil (Kotlin · Jetpack Compose)
 
+Integrantes: Cristóbal Retamal
+             Diego Marambio
+
 > “Cada dulce cuenta una historia.” 🍰  
 Aplicación móvil desarrollada en **Kotlin** con **Jetpack Compose**, inspirada en la pastelería chilena *Mil Sabores*.  
 Permite explorar productos, leer artículos del blog, conocer la historia de la marca.
 
 ---
 
-## 🌟 Características Principales
+## Funcionalidades Principales
 
 - 🏠 **Pantalla de inicio** con productos destacados y acceso directo al catálogo.  
 - 🍰 **Catálogo completo** de productos con imágenes, descripción, precio y botones de acción.  
@@ -17,6 +20,7 @@ Permite explorar productos, leer artículos del blog, conocer la historia de la 
 - 🎨 **Diseño Material 3** con tipografía *Pacifico* y paleta de colores institucional (crema, rosa y chocolate).  
 
 ---
+## INCLUYE API EXTERNA
 
 ## 🧩 Arquitectura del Proyecto
 
