@@ -10,10 +10,9 @@ import com.example.urbanstyle.data.dao.UsuarioDao
 import com.example.urbanstyle.data.model.Producto
 import com.example.urbanstyle.data.model.Usuario
 
-@Database(entities = [Producto::class, Usuario::class], version = 2, exportSchema = false)
+@Database(entities = [Usuario::class], version = 1, exportSchema = false)
 abstract class BaseDeDatos : RoomDatabase() {
 
-    abstract fun productoDao(): ProductoDao
     abstract fun usuarioDao(): UsuarioDao
 
     companion object {
@@ -21,19 +20,15 @@ abstract class BaseDeDatos : RoomDatabase() {
         private var INSTANCE: BaseDeDatos? = null
 
         fun getDatabase(context: Context): BaseDeDatos {
+            // Patrón Singleton para no abrir múltiples conexiones a la vez
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     BaseDeDatos::class.java,
-                    "app_database"
-                )
-                    // Permite a Room recrear las tablas si se actualiza la versión de la BD.
-                    // útil para desarrollo.
-                    .fallbackToDestructiveMigration()
-                    .build()
-
+                    "huerto_hogar_db" // Nombre del archivo de la BD en el celular
+                ).build()
                 INSTANCE = instance
-                return instance
+                instance
             }
         }
     }

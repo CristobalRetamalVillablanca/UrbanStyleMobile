@@ -3,15 +3,17 @@ package com.example.urbanstyle.data.repository
 import com.example.urbanstyle.data.dao.UsuarioDao
 import com.example.urbanstyle.data.model.Usuario
 
+class UsuarioRepository(private val usuarioDao: UsuarioDao) {
 
-
-class UsuarioRepository(val usuarioDao: UsuarioDao) {
-    suspend fun insertarUsuario(usuario: Usuario) {
+    suspend fun registrarUsuario(usuario: Usuario) {
         usuarioDao.insertarUsuario(usuario)
     }
 
-    suspend fun buscarUsuario(correo: String, contrasena: String): Usuario
-    ? {
-        return usuarioDao.findUserByEmailAndPassword(correo, contrasena)
+    suspend fun login(correo: String, pass: String): Usuario? {
+        return usuarioDao.login(correo, pass)
+    }
+
+    suspend fun existeCorreo(correo: String): Boolean {
+        return usuarioDao.obtenerPorCorreo(correo) != null
     }
 }

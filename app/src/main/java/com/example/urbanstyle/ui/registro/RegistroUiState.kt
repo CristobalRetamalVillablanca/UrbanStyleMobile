@@ -19,5 +19,6 @@ data class RegistroUiState(
     val comuna: String = "",
     val codigoDescuento: String = "",
     val isLoading: Boolean = false,
-    val registroExitoso: Boolean = false
+    val registroExitoso: Boolean = false,
+    val mensajeErrorGeneral: String? = null
 )

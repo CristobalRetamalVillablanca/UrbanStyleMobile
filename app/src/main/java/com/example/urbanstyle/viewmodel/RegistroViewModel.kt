@@ -2,161 +2,131 @@ package com.example.urbanstyle.viewmodel
 
 import android.app.Application
 import android.util.Patterns
-import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.urbanstyle.data.database.BaseDeDatos
 import com.example.urbanstyle.data.model.Usuario
 import com.example.urbanstyle.data.repository.UsuarioRepository
 import com.example.urbanstyle.ui.registro.RegistroUiState
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import com.example.urbanstyle.utils.regionesDeChile
 import com.example.urbanstyle.utils.obtenerComunas
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 
-open class   RegistroViewModel(application: Application) : AndroidViewModel(application) {
+class RegistroViewModel(application: Application) : AndroidViewModel(application) {
+
     private val repository: UsuarioRepository
 
-    open val _uiState = MutableStateFlow(RegistroUiState())
-    open val uiState: StateFlow<RegistroUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(RegistroUiState())
+    val uiState: StateFlow<RegistroUiState> = _uiState.asStateFlow()
 
-    open val regiones: List<String> = regionesDeChile
-    open val comunas: StateFlow<List<String>> = MutableStateFlow(emptyList())
+    // 🔹 Lista fija de regiones
+    val regiones = regionesDeChile
+
+    // 🔹 Flujo dinámico de comunas según región seleccionada
+    private val _comunas = MutableStateFlow<List<String>>(emptyList())
+    val comunas: StateFlow<List<String>> = _comunas.asStateFlow()
 
     init {
-        val usuarioDao = BaseDeDatos.getDatabase(application).usuarioDao()
-        repository = UsuarioRepository(usuarioDao)
+        val db = BaseDeDatos.getDatabase(application)
+        repository = UsuarioRepository(db.usuarioDao())
     }
 
-    // --- Eventos de la UI ---
-    open fun onNombreChange(nuevoNombre: String) {
-        _uiState.update { it.copy(nombreCompleto = nuevoNombre) }
-        validarNombre()
+    // --- Actualizaciones de campos ---
+    fun onNombreChange(nuevo: String) {
+        _uiState.update { it.copy(nombreCompleto = nuevo, errorNombre = null) }
     }
 
-    open fun onFechaNacimientoChange(nuevaFecha: String) {
-        _uiState.update { it.copy(fechaNacimiento = nuevaFecha) }
+    fun onCorreoChange(nuevo: String) {
+        _uiState.update { it.copy(correo = nuevo, errorCorreo = null) }
     }
 
-    open fun onCorreoChange(nuevoCorreo: String) {
-        _uiState.update { it.copy(correo = nuevoCorreo) }
-        validarCorreo()
+    fun onPassChange(nuevo: String) {
+        _uiState.update { it.copy(contrasena = nuevo, errorContrasena = null) }
     }
 
-    open fun onContrasenaChange(nuevaContrasena: String) {
-        _uiState.update { it.copy(contrasena = nuevaContrasena) }
-        validarContrasena()
-        validarConfirmarContrasena()
+    fun onConfirmPassChange(nuevo: String) {
+        _uiState.update { it.copy(confirmarContrasena = nuevo, errorConfirmarContrasena = null) }
     }
 
-    open fun onConfirmarContrasenaChange(nuevaConfirmacion: String) {
-        _uiState.update { it.copy(confirmarContrasena = nuevaConfirmacion) }
-        validarConfirmarContrasena()
+    fun onFechaChange(nuevo: String) {
+        _uiState.update { it.copy(fechaNacimiento = nuevo) }
     }
 
-    open fun onTelefonoChange(nuevoTelefono: String) {
-        _uiState.update { it.copy(telefono = nuevoTelefono) }
+    fun onTelefonoChange(nuevo: String) {
+        _uiState.update { it.copy(telefono = nuevo) }
     }
 
-    open fun onRegionSelected(nuevaRegion: String) {
-        _uiState.update { it.copy(region = nuevaRegion, comuna = "") }
-        (comunas as MutableStateFlow).value = obtenerComunas(nuevaRegion)
+    fun onCodigoDescuentoChange(nuevo: String) {
+        _uiState.update { it.copy(codigoDescuento = nuevo) }
     }
 
-    open fun onComunaSelected(nuevaComuna: String) {
-        _uiState.update { it.copy(comuna = nuevaComuna) }
+    fun onRegionChange(nuevo: String) {
+        _uiState.update { it.copy(region = nuevo, comuna = "") }
+        _comunas.value = obtenerComunas(nuevo)   // ← ACTUALIZA LAS COMUNAS
     }
 
-    open fun onCodigoDescuentoChange(nuevoCodigo: String) {
-        _uiState.update { it.copy(codigoDescuento = nuevoCodigo) }
+    fun onComunaChange(nuevo: String) {
+        _uiState.update { it.copy(comuna = nuevo) }
     }
 
-    // --- Lógica de Validación ---
-    private fun validarNombre() {
-        val nombre = _uiState.value.nombreCompleto
-        _uiState.update {
-            it.copy(errorNombre = if (nombre.length < 3) "El nombre debe tener al menos 3 caracteres." else null)
+    // --- Registrar usuario (nombre corregido para coincidir con la UI) ---
+    fun registrarUsuario() {
+        val state = _uiState.value
+        var hayError = false
+
+        // Validaciones
+        if (state.nombreCompleto.length < 4) {
+            _uiState.update { it.copy(errorNombre = "Nombre muy corto") }
+            hayError = true
         }
-    }
-
-    private fun validarCorreo() {
-        val correo = _uiState.value.correo
-        val allowedDomains = listOf("@gmail.com", "@duocuc.cl", "@profesorduocuc.cl")
-        val error = when {
-            correo.isBlank() -> "El correo no puede estar vacío."
-            !Patterns.EMAIL_ADDRESS.matcher(correo).matches() -> "El formato del correo no es válido."
-            allowedDomains.none { correo.endsWith(it) } -> "Dominio no permitido. Use @gmail.com, @duocuc.cl o @profesorduocuc.cl"
-            else -> null
+        if (!Patterns.EMAIL_ADDRESS.matcher(state.correo).matches()) {
+            _uiState.update { it.copy(errorCorreo = "Email inválido") }
+            hayError = true
         }
-        _uiState.update { it.copy(errorCorreo = error) }
-    }
-
-    private fun validarContrasena() {
-        val contrasena = _uiState.value.contrasena
-        val error = when {
-            contrasena.length < 8 -> "La contraseña debe tener al menos 8 caracteres."
-            !contrasena.any { it.isDigit() } -> "La contraseña debe contener al menos un número."
-            !contrasena.any { it.isUpperCase() } -> "La contraseña debe contener al menos una mayúscula."
-            else -> null
+        if (state.contrasena.length < 6) {
+            _uiState.update { it.copy(errorContrasena = "Mínimo 6 caracteres") }
+            hayError = true
         }
-        _uiState.update { it.copy(errorContrasena = error) }
-    }
-
-    private fun validarConfirmarContrasena() {
-        val contrasena = _uiState.value.contrasena
-        val confirmar = _uiState.value.confirmarContrasena
-        _uiState.update {
-            it.copy(errorConfirmarContrasena = if (contrasena != confirmar) "Las contraseñas no coinciden." else null)
-        }
-    }
-
-    private fun validarFormulario(): Boolean {
-        validarNombre()
-        validarCorreo()
-        validarContrasena()
-        validarConfirmarContrasena()
-
-        val currentState = _uiState.value
-        return currentState.errorNombre == null &&
-                currentState.errorCorreo == null &&
-                currentState.errorContrasena == null &&
-                currentState.errorConfirmarContrasena == null &&
-                currentState.nombreCompleto.isNotBlank() &&
-                currentState.correo.isNotBlank() &&
-                currentState.contrasena.isNotBlank() &&
-                currentState.region.isNotBlank() &&
-                currentState.comuna.isNotBlank()
-    }
-
-    open fun registrarUsuario() {
-        if (!validarFormulario()) {
-            Toast.makeText(getApplication(), "Por favor, corrige los errores.", Toast.LENGTH_SHORT).show()
-            return
+        if (state.contrasena != state.confirmarContrasena) {
+            _uiState.update { it.copy(errorConfirmarContrasena = "Las contraseñas no coinciden") }
+            hayError = true
         }
 
-        _uiState.update { it.copy(isLoading = true) }
+        if (hayError) return
 
-        val estadoActual = _uiState.value
-        val nuevoUsuario = Usuario(
-            nombre = estadoActual.nombreCompleto,
-            fechaNacimiento = estadoActual.fechaNacimiento,
-            correo = estadoActual.correo,
-            contrasena = estadoActual.contrasena,
-            region = estadoActual.region,
-            comuna = estadoActual.comuna,
-            telefono = estadoActual.telefono.ifBlank { null },
-            codigoDescuento = estadoActual.codigoDescuento.ifBlank { null }
-        )
-
+        // Guardar en BD
         viewModelScope.launch(Dispatchers.IO) {
-            repository.insertarUsuario(nuevoUsuario)
-            launch(Dispatchers.Main) {
+            try {
+                _uiState.update { it.copy(isLoading = true) }
+
+                if (repository.existeCorreo(state.correo)) {
+                    _uiState.update {
+                        it.copy(isLoading = false, errorCorreo = "Este correo ya está registrado")
+                    }
+                    return@launch
+                }
+
+                val nuevoUsuario = Usuario(
+                    nombreCompleto = state.nombreCompleto,
+                    fechaNacimiento = state.fechaNacimiento,
+                    correo = state.correo,
+                    contrasena = state.contrasena,
+                    telefono = state.telefono,
+                    region = state.region,
+                    comuna = state.comuna,
+                    codigoDescuento = state.codigoDescuento
+                )
+
+                repository.registrarUsuario(nuevoUsuario)
+
                 _uiState.update { it.copy(isLoading = false, registroExitoso = true) }
-                Toast.makeText(getApplication(), "¡Usuario registrado con éxito!", Toast.LENGTH_LONG).show()
+
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(isLoading = false, mensajeErrorGeneral = "Error: ${e.message}")
+                }
             }
         }
     }

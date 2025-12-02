@@ -1,6 +1,7 @@
 package com.example.urbanstyle.ui.registro
 
-
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.*
 import android.app.DatePickerDialog
 import android.widget.DatePicker
 import androidx.compose.foundation.background
@@ -26,20 +27,18 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.urbanstyle.viewmodel.RegistroViewModel
-
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegistroScreen(
     navController: NavController,
-
+    // El viewModel() usará el factory por defecto para AndroidViewModel (inyecta Application)
     registroViewModel: RegistroViewModel = viewModel()
 ) {
-    // Gestión de Estado: La UI consume el estado (uiState) del ViewModel.
     val uiState by registroViewModel.uiState.collectAsState()
 
-    // Navegación basada en estado: Reacciona a un cambio en el estado para navegar.
+    // Navegación al completar registro
     LaunchedEffect(uiState.registroExitoso) {
         if (uiState.registroExitoso) {
             navController.popBackStack()
@@ -50,11 +49,15 @@ fun RegistroScreen(
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("Formulario de Registro") },
-                navigationIcon = { IconButton(onClick = { navController.popBackStack() }) { Icon(Icons.Filled.ArrowBack, "Volver") } },
-                // CORREGIDO: Usa el color primario del tema (VerdeEsmeralda) [cite: 152]
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Filled.ArrowBack, "Volver")
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
         }
@@ -65,31 +68,31 @@ fun RegistroScreen(
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp)
                 .verticalScroll(rememberScrollState())
-                // CORREGIDO: Usa el color de fondo del tema (BlancoSuave)
                 .background(MaterialTheme.colorScheme.background),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(24.dp))
 
+            // Nombre
             OutlinedTextField(
                 value = uiState.nombreCompleto,
-                // Lógica de Validación: Cada cambio llama al ViewModel, que ejecuta la validación.
                 onValueChange = { registroViewModel.onNombreChange(it) },
                 label = { Text("Nombre Completo") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                // El error se muestra según el estado que provee el ViewModel.
                 isError = uiState.errorNombre != null,
                 supportingText = { if (uiState.errorNombre != null) Text(uiState.errorNombre!!) }
             )
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Fecha
             DatePickerField(
                 fechaSeleccionada = uiState.fechaNacimiento,
-                onFechaSeleccionada = { registroViewModel.onFechaNacimientoChange(it) }
+                onFechaSeleccionada = { registroViewModel.onFechaChange(it) }
             )
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Correo
             OutlinedTextField(
                 value = uiState.correo,
                 onValueChange = { registroViewModel.onCorreoChange(it) },
@@ -102,9 +105,10 @@ fun RegistroScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Contraseña
             OutlinedTextField(
                 value = uiState.contrasena,
-                onValueChange = { registroViewModel.onContrasenaChange(it) },
+                onValueChange = { registroViewModel.onPassChange(it) },
                 label = { Text("Contraseña") },
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = PasswordVisualTransformation(),
@@ -115,9 +119,10 @@ fun RegistroScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Confirmar Contraseña
             OutlinedTextField(
                 value = uiState.confirmarContrasena,
-                onValueChange = { registroViewModel.onConfirmarContrasenaChange(it) },
+                onValueChange = { registroViewModel.onConfirmPassChange(it) },
                 label = { Text("Confirmar Contraseña") },
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = PasswordVisualTransformation(),
@@ -128,6 +133,7 @@ fun RegistroScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Teléfono
             OutlinedTextField(
                 value = uiState.telefono,
                 onValueChange = { registroViewModel.onTelefonoChange(it) },
@@ -138,9 +144,11 @@ fun RegistroScreen(
             )
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Dropdowns
             RegionComunaDropDowns(viewModel = registroViewModel)
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Código Descuento
             OutlinedTextField(
                 value = uiState.codigoDescuento,
                 onValueChange = { registroViewModel.onCodigoDescuentoChange(it) },
@@ -150,6 +158,7 @@ fun RegistroScreen(
             )
             Spacer(modifier = Modifier.height(24.dp))
 
+            // Botón Registrar
             Button(
                 onClick = { registroViewModel.registrarUsuario() },
                 modifier = Modifier.fillMaxWidth(),
@@ -188,14 +197,25 @@ fun DatePickerField(
         calendar.get(Calendar.DAY_OF_MONTH)
     )
 
-    OutlinedTextField(
-        value = fechaSeleccionada,
-        onValueChange = {},
-        label = { Text("Fecha de Nacimiento") },
-        readOnly = true,
-        modifier = Modifier.fillMaxWidth().clickable { datePickerDialog.show() },
-        trailingIcon = { Icon(Icons.Default.DateRange, "Seleccionar Fecha", modifier = Modifier.clickable { datePickerDialog.show() }) }
-    )
+    // Logica para abrir el picker al hacer click en el TextField o Icono
+    Box {
+        OutlinedTextField(
+            value = fechaSeleccionada,
+            onValueChange = {},
+            label = { Text("Fecha de Nacimiento") },
+            readOnly = true,
+            modifier = Modifier.fillMaxWidth(),
+            trailingIcon = {
+                Icon(Icons.Default.DateRange, "Seleccionar Fecha")
+            }
+        )
+        // Overlay transparente clickeable
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clickable { datePickerDialog.show() }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -203,10 +223,16 @@ fun DatePickerField(
 fun RegionComunaDropDowns(viewModel: RegistroViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     val comunas by viewModel.comunas.collectAsState()
+    // Nota: viewModel.regiones es una lista fija, no un Flow, así que se accede directo
+
     var regionExpanded by remember { mutableStateOf(false) }
     var comunaExpanded by remember { mutableStateOf(false) }
 
-    ExposedDropdownMenuBox(expanded = regionExpanded, onExpandedChange = { regionExpanded = !regionExpanded }) {
+    // Dropdown Región
+    ExposedDropdownMenuBox(
+        expanded = regionExpanded,
+        onExpandedChange = { regionExpanded = !regionExpanded }
+    ) {
         OutlinedTextField(
             value = uiState.region,
             onValueChange = {},
@@ -215,12 +241,15 @@ fun RegionComunaDropDowns(viewModel: RegistroViewModel) {
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = regionExpanded) },
             modifier = Modifier.menuAnchor().fillMaxWidth()
         )
-        ExposedDropdownMenu(expanded = regionExpanded, onDismissRequest = { regionExpanded = false }) {
+        ExposedDropdownMenu(
+            expanded = regionExpanded,
+            onDismissRequest = { regionExpanded = false }
+        ) {
             viewModel.regiones.forEach { regionSeleccionada ->
                 DropdownMenuItem(
                     text = { Text(regionSeleccionada) },
                     onClick = {
-                        viewModel.onRegionSelected(regionSeleccionada)
+                        viewModel.onRegionChange(regionSeleccionada)
                         regionExpanded = false
                     }
                 )
@@ -230,7 +259,11 @@ fun RegionComunaDropDowns(viewModel: RegistroViewModel) {
 
     Spacer(modifier = Modifier.height(8.dp))
 
-    ExposedDropdownMenuBox(expanded = comunaExpanded, onExpandedChange = { if (comunas.isNotEmpty()) comunaExpanded = !comunaExpanded }) {
+    // Dropdown Comuna
+    ExposedDropdownMenuBox(
+        expanded = comunaExpanded,
+        onExpandedChange = { if (comunas.isNotEmpty()) comunaExpanded = !comunaExpanded }
+    ) {
         OutlinedTextField(
             value = uiState.comuna,
             onValueChange = {},
@@ -240,12 +273,15 @@ fun RegionComunaDropDowns(viewModel: RegistroViewModel) {
             enabled = comunas.isNotEmpty(),
             modifier = Modifier.menuAnchor().fillMaxWidth()
         )
-        ExposedDropdownMenu(expanded = comunaExpanded, onDismissRequest = { comunaExpanded = false }) {
+        ExposedDropdownMenu(
+            expanded = comunaExpanded,
+            onDismissRequest = { comunaExpanded = false }
+        ) {
             comunas.forEach { comunaSeleccionada ->
                 DropdownMenuItem(
                     text = { Text(comunaSeleccionada) },
                     onClick = {
-                        viewModel.onComunaSelected(comunaSeleccionada)
+                        viewModel.onComunaChange(comunaSeleccionada)
                         comunaExpanded = false
                     }
                 )

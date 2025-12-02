@@ -91,9 +91,17 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.6.0")
     debugImplementation("androidx.compose.ui:ui-test-manifest:1.6.0")
 
-    // Mockito para Android (Vital para simular el ViewModel y no usar la BD real)
+    // Mockito para Android Vital para simular el ViewModel
     androidTestImplementation("org.mockito:mockito-android:5.7.0")
     androidTestImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
+// Corrutinas para trabajo asincrónico
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
+// Jetpack Compose
+    implementation("androidx.activity:activity-compose:1.9.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
