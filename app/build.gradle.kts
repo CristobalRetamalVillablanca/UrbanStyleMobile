@@ -94,6 +94,10 @@ dependencies {
     // Mockito para Android Vital para simular el ViewModel
     androidTestImplementation("org.mockito:mockito-android:5.7.0")
     androidTestImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+    // Mapas y Ubicación
+    implementation("org.osmdroid:osmdroid-android:6.1.18")
+    implementation("com.google.android.gms:play-services-location:21.1.0")
 
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")

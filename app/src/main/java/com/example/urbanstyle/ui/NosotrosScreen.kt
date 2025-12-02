@@ -1,15 +1,21 @@
 package com.example.urbanstyle.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -17,14 +23,56 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.urbanstyle.R
 import com.example.urbanstyle.ui.components.BottomBar
-import androidx.compose.foundation.lazy.LazyColumn
+import com.example.urbanstyle.ui.map.MapViewModel
+import org.osmdroid.config.Configuration
+import org.osmdroid.tileprovider.tilesource.TileSourceFactory
+import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.Marker
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NosotrosScreen(navController: NavHostController) {
+fun NosotrosScreen(
+    navController: NavHostController,
+    // Inyectamos el ViewModel del mapa para manejar la ubicación
+    mapViewModel: MapViewModel = viewModel()
+) {
+    // --- LÓGICA DEL MAPA (Permisos y Configuración) ---
+    val context = LocalContext.current
+    val mapUiState by mapViewModel.uiState.collectAsState()
+
+    // Configuración obligatoria de OSMDroid (User Agent)
+    LaunchedEffect(Unit) {
+        Configuration.getInstance().userAgentValue = context.packageName
+    }
+
+    // Estado de permisos
+    var hasLocationPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        )
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        hasLocationPermission = isGranted
+        if (isGranted) mapViewModel.getCurrentLocation()
+    }
+
+    // Intentar obtener ubicación al entrar a la pantalla
+    LaunchedEffect(Unit) {
+        if (hasLocationPermission) mapViewModel.getCurrentLocation()
+        // Si quieres pedir permiso apenas entra, descomenta la siguiente línea:
+        // else permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+    }
+    // --------------------------------------------------
+
     val pacifico = FontFamily(Font(R.font.pacifico))
     val cafe = Color(0xFF5D4037)
     val cremaOverlay = Color(0xFFFFF6E8).copy(alpha = 0.82f)
@@ -107,7 +155,7 @@ fun NosotrosScreen(navController: NavHostController) {
                 }
             }
 
-
+            // ---------- Historia ----------
             item {
                 ElevatedCard(
                     shape = RoundedCornerShape(20.dp),
@@ -136,12 +184,11 @@ fun NosotrosScreen(navController: NavHostController) {
                             MetricItem("1",   "Récord\nGuinness",   Modifier.weight(1f))
                             MetricItem("10k+","Clientes\nSatisfechos",Modifier.weight(1f))
                         }
-
                     }
                 }
             }
 
-
+            // ---------- Misión / Visión ----------
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -162,7 +209,7 @@ fun NosotrosScreen(navController: NavHostController) {
                 }
             }
 
-
+            // ---------- Equipo ----------
             item {
                 ElevatedCard(
                     shape = RoundedCornerShape(20.dp),
@@ -224,11 +271,98 @@ fun NosotrosScreen(navController: NavHostController) {
                     }
                 }
             }
+
+            // ==========================================================
+            // NUEVA SECCIÓN: MAPA DE UBICACIÓN (Al final del scroll)
+            // ==========================================================
+            item {
+                ElevatedCard(
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(MaterialTheme.colorScheme.surface),
+                    elevation = CardDefaults.elevatedCardElevation(2.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Text(
+                            text = "Visítanos",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontFamily = pacifico,
+                            color = cafe
+                        )
+
+                        // Contenedor del Mapa con Altura Fija
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(350.dp) // Altura esencial para LazyColumn
+                                .clip(RoundedCornerShape(12.dp))
+                        ) {
+                            // Vista de OSMDroid
+                            AndroidView(
+                                modifier = Modifier.fillMaxSize(),
+                                factory = { ctx ->
+                                    MapView(ctx).apply {
+                                        setTileSource(TileSourceFactory.MAPNIK)
+                                        setMultiTouchControls(true)
+                                        controller.setZoom(15.0)
+                                        controller.setCenter(mapUiState.storeLocation)
+                                    }
+                                },
+                                update = { mapView ->
+                                    mapView.overlays.clear()
+
+                                    // Marcador del Local
+                                    val storeMarker = Marker(mapView).apply {
+                                        position = mapUiState.storeLocation
+                                        title = "Huerto Hogar"
+                                        snippet = "Nuestro Local"
+                                        setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                                    }
+                                    mapView.overlays.add(storeMarker)
+
+                                    // Marcador del Usuario (si hay GPS)
+                                    mapUiState.userLocation?.let { userPos ->
+                                        val userMarker = Marker(mapView).apply {
+                                            position = userPos
+                                            title = "Tu ubicación"
+                                            setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                                        }
+                                        mapView.overlays.add(userMarker)
+                                    }
+                                    mapView.invalidate()
+                                }
+                            )
+
+                            // Botón para pedir permisos si no se tienen
+                            if (!hasLocationPermission) {
+                                Button(
+                                    onClick = { permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION) },
+                                    modifier = Modifier.align(Alignment.Center)
+                                ) {
+                                    Text("Ver mi ubicación (Activar GPS)")
+                                }
+                            }
+                        }
+
+                        Text(
+                            text = "Avenida Siempre Viva 742, Santiago.\nTe esperamos con los brazos abiertos.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                    }
+                }
+            }
+
+            // Espacio final para que el BottomBar no tape el último item
+            item { Spacer(modifier = Modifier.height(30.dp)) }
         }
     }
 }
 
-/* ======= Componentes reutilizables ======= */
+/* ======= Componentes reutilizables (Sin cambios) ======= */
 
 @Composable
 private fun MetricItem(numero: String, texto: String, modifier: Modifier = Modifier) {

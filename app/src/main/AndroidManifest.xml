@@ -8,6 +8,10 @@
     <!-- Declara la cámara solo una vez -->
     <uses-feature android:name="android.hardware.camera" android:required="false"/>
 
+    <!-- 1. Permisos de Ubicación -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -28,6 +32,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-    </application>
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AQUI_PEGA_TU_API_KEY_DE_GOOGLE_CLOUD" />
 
+    </application>
 </manifest>
