@@ -1,6 +1,7 @@
 # 🧁 Pastelería Mil Sabores — Aplicación Móvil (Kotlin · Jetpack Compose)
 
 Integrantes: Cristóbal Retamal
+
              Diego Marambio
 
 > “Cada dulce cuenta una historia.” 🍰  
@@ -21,6 +22,7 @@ Permite explorar productos, leer artículos del blog, conocer la historia de la 
 
 ---
 ## INCLUYE API EXTERNA
+Que muestra posts 
 
 ## 🧩 Arquitectura del Proyecto
 
