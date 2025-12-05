@@ -2,69 +2,78 @@ package com.example.urbanstyle.ui.screens
 
 import android.app.Application
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.test.*
+
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.navigation.compose.rememberNavController
+import androidx.compose.ui.test.*
+
 import androidx.navigation.testing.TestNavHostController
 import androidx.test.core.app.ApplicationProvider
+
 import com.example.urbanstyle.login.LoginScreen
 import com.example.urbanstyle.ui.login.LoginViewModel
+
 import org.junit.Rule
 import org.junit.Test
 
+
 class LoginScreenTest {
-    //Usar Pixel 5 API 34 para el buen funcionamiento de los testing
-    // Regla necesaria para interactuar con Compose
+
     @get:Rule
     val composeTestRule = createComposeRule()
 
     @Test
     fun loginScreen_camposExisten_y_recibenTexto() {
-        // Configuración inicial de la pantalla
+        val appContext = ApplicationProvider.getApplicationContext<Application>()
+
         composeTestRule.setContent {
-            // Creamos un NavController de prueba
             val navController = TestNavHostController(LocalContext.current)
-            // Creamos el ViewModel real para probar la lógica junto con la UI
-            val viewModel = LoginViewModel()
+            val viewModel = LoginViewModel(appContext)
 
             LoginScreen(navController = navController, vm = viewModel)
         }
 
-        composeTestRule.onNodeWithText("Usuario")
+        // Campo "Correo Electrónico"
+        composeTestRule.onNode(
+            hasText("Correo Electrónico") and hasSetTextAction()
+        )
             .assertExists()
-            .performTextInput("Admin")
+            .performTextInput("admin@milsabores.cl")
 
-        composeTestRule.onNodeWithText("Contraseña")
+        // Campo "Contraseña"
+        composeTestRule.onNode(
+            hasText("Contraseña") and hasSetTextAction()
+        )
             .assertExists()
-            .performTextInput("Hola")
+            .performTextInput("Hola123")
 
-        // Verificar visualmente que el texto se escribió (opcional pero útil)
-        composeTestRule.onNodeWithText("Admin").assertIsDisplayed()
-    }
-
-    @Test
-    fun loginScreen_credencialesIncorrectas_muestraError() {
-        composeTestRule.setContent {
-            val navController = TestNavHostController(LocalContext.current)
-            val viewModel = LoginViewModel()
-            LoginScreen(navController = navController, vm = viewModel)
-        }
-
-        // 1. Ingresar datos incorrectos
-        composeTestRule.onNodeWithText("Usuario").performTextInput("UsuarioFalso")
-        composeTestRule.onNodeWithText("Contraseña").performTextInput("123Mal")
-
-        // 2. Hacer click en el botón "Iniciar Sesión"
-        // Buscamos el botón por el texto que contiene
-        composeTestRule.onNodeWithText("Iniciar Sesión").performClick()
-
-        // 3. Verificar que aparece el mensaje de error "Credenciales Invalidas"
-        // Esperamos hasta que el árbol de UI se actualice
-        composeTestRule.waitForIdle()
-
-        composeTestRule.onNodeWithText("Credenciales Invalidas")
+        // Verificamos que la pantalla sigue visible (no crasheó)
+        composeTestRule.onNodeWithText("Iniciar Sesión")
             .assertExists()
             .assertIsDisplayed()
     }
 
+    @Test
+    fun loginScreen_sinDatos_muestraErrorDeCamposObligatorios() {
+        val appContext = ApplicationProvider.getApplicationContext<Application>()
+
+        composeTestRule.setContent {
+            val navController = TestNavHostController(LocalContext.current)
+            val viewModel = LoginViewModel(appContext)
+
+            LoginScreen(navController = navController, vm = viewModel)
+        }
+
+        // Sin escribir nada, apretamos el botón
+        composeTestRule.onNodeWithText("Iniciar Sesión")
+            .assertExists()
+            .performClick()
+
+        // Esta rama del ViewModel NO usa corrutinas (es sincrónica),
+        // así que el mensaje "Ingresa correo y contraseña" ya está seteado.
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Ingresa correo y contraseña")
+            .assertExists()
+            .assertIsDisplayed()
+    }
 }

@@ -16,4 +16,8 @@ class UsuarioRepository(private val usuarioDao: UsuarioDao) {
     suspend fun existeCorreo(correo: String): Boolean {
         return usuarioDao.obtenerPorCorreo(correo) != null
     }
+    suspend fun guardarComentarioLogin(correo: String, comentario: String) {
+        usuarioDao.actualizarComentarioLogin(correo, comentario)
+    }
+
 }

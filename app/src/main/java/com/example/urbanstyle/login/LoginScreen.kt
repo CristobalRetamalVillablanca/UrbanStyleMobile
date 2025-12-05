@@ -18,28 +18,22 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.example.urbanstyle.R // Asegúrate de importar tu R
+import com.example.urbanstyle.R
 import com.example.urbanstyle.ui.login.LoginViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
     navController: NavController,
-    // Usamos el viewModel que definimos en AppViewModels.kt
     vm: LoginViewModel = viewModel()
 ) {
-    // Observamos el estado del ViewModel (Flow)
     val state by vm.uiState.collectAsState()
 
-    // Efecto para navegar cuando el login es exitoso
     LaunchedEffect(state.loginExitoso) {
         if (state.loginExitoso) {
-            // Navegar a la pantalla principal (Home)
-            // Borramos el stack para que no pueda volver al login con "atrás"
             navController.navigate("home") {
                 popUpTo("login") { inclusive = true }
             }
-            // Opcional: Resetear estado
             vm.resetState()
         }
     }
@@ -51,9 +45,8 @@ fun LoginScreen(
                 .padding(16.dp)
                 .fillMaxWidth()
         ) {
-            // --- LOGO Y TÍTULO (Manteniendo tu estética) ---
             Image(
-                painter = painterResource(id = R.drawable.logo), // Asegúrate de tener logo.jpg/png en res/drawable
+                painter = painterResource(id = R.drawable.logo),
                 contentDescription = "Logo",
                 modifier = Modifier.size(120.dp),
                 contentScale = ContentScale.Fit
@@ -70,9 +63,7 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // --- CAMPOS DE TEXTO ---
-
-            // Campo Correo
+            // -------- Correo ----------
             OutlinedTextField(
                 value = state.correo,
                 onValueChange = { vm.onCorreoChange(it) },
@@ -84,15 +75,27 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Campo Contraseña
+            // -------- Contraseña ----------
             OutlinedTextField(
                 value = state.contrasena,
                 onValueChange = { vm.onPasswordChange(it) },
                 label = { Text("Contraseña") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                visualTransformation = PasswordVisualTransformation(), // Ocultar caracteres
+                visualTransformation = PasswordVisualTransformation(),
                 isError = state.errorLogin != null
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // -------- Comentario (opcional) ----------
+            OutlinedTextField(
+                value = state.comentario,
+                onValueChange = { vm.onComentarioChange(it) },
+                label = { Text("Comentario (opcional)") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = false,
+                maxLines = 3
             )
 
             // Mensaje de Error
@@ -106,7 +109,6 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // --- BOTÓN DE INGRESO ---
             Button(
                 onClick = { vm.iniciarSesion() },
                 enabled = !state.isLoading,
@@ -128,7 +130,6 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // --- ENLACE A REGISTRO ---
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(text = "¿No tienes cuenta? ")
                 Text(
@@ -144,12 +145,9 @@ fun LoginScreen(
     }
 }
 
-// Previsualización para Android Studio
 @Preview(showBackground = true)
 @Composable
 fun PreviewLoginScreen() {
-    // Nota: El ViewModel requiere Application context, por lo que el preview
-    // podría fallar si no se moquea, pero para diseño visual básico sirve.
     val navController = rememberNavController()
-    // LoginScreen(navController = navController) // Comentado para evitar error de contexto en preview
+    // LoginScreen(navController = navController)
 }

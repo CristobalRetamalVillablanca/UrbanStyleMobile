@@ -4,9 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.Update
 import com.example.urbanstyle.data.model.Usuario
-import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface UsuarioDao {
@@ -21,4 +19,8 @@ interface UsuarioDao {
     // Validar: Chequear si el correo ya existe para no repetir registros
     @Query("SELECT * FROM usuarios WHERE correo = :correo LIMIT 1")
     suspend fun obtenerPorCorreo(correo: String): Usuario?
+
+    // actualizar comentario
+    @Query("UPDATE usuarios SET comentarioLogin = :comentario WHERE correo = :correo")
+    suspend fun actualizarComentarioLogin(correo: String, comentario: String)
 }

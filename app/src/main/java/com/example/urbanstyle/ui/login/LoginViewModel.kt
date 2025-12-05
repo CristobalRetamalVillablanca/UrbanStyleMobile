@@ -18,7 +18,6 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
-
     init {
         val db = BaseDeDatos.getDatabase(application)
         repository = UsuarioRepository(db.usuarioDao())
@@ -30,6 +29,10 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
     fun onPasswordChange(pass: String) {
         _uiState.update { it.copy(contrasena = pass, errorLogin = null) }
+    }
+
+    fun onComentarioChange(comentario: String) {
+        _uiState.update { it.copy(comentario = comentario) }
     }
 
     fun iniciarSesion() {
@@ -46,9 +49,26 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
             val usuario = repository.login(correo, pass)
 
             if (usuario != null) {
-                _uiState.update { it.copy(isLoading = false, loginExitoso = true, usuarioNombre = usuario.nombreCompleto) }
+
+                val comentarioActual = _uiState.value.comentario.trim()
+                if (comentarioActual.isNotEmpty()) {
+                    repository.guardarComentarioLogin(correo, comentarioActual)
+                }
+
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        loginExitoso = true,
+                        usuarioNombre = usuario.nombreCompleto
+                    )
+                }
             } else {
-                _uiState.update { it.copy(isLoading = false, errorLogin = "Credenciales incorrectas") }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorLogin = "Credenciales incorrectas"
+                    )
+                }
             }
         }
     }

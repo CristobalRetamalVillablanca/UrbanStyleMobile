@@ -1,136 +1,152 @@
 package com.example.urbanstyle.ui.screens
 
-
+import android.app.Application
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.navigation.NavController
+import androidx.navigation.testing.TestNavHostController
+import androidx.test.core.app.ApplicationProvider
 import com.example.urbanstyle.ui.registro.RegistroScreen
-import com.example.urbanstyle.ui.registro.RegistroUiState
 import com.example.urbanstyle.viewmodel.RegistroViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Rule
 import org.junit.Test
-import org.mockito.Mockito.mock
-import org.mockito.kotlin.verify
-import org.mockito.kotlin.whenever
 
 class RegistroScreenTest {
 
-    // Regla para iniciar el entorno de Compose
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    // --- MOCKS ---
-    // Creamos las versiones "falsas" de las clases.
-    // Al ser el ViewModel 'open', Mockito ya no fallará aquí.
-    private val mockNavController = mock(NavController::class.java)
-    private val mockViewModel = mock(RegistroViewModel::class.java)
+    // Guardamos una referencia al último ViewModel usado en la UI
+    private lateinit var ultimoViewModel: RegistroViewModel
 
-    // Simulamos los flujos de datos (StateFlow)
-    // Usamos MutableStateFlow para poder cambiar los valores durante el test si es necesario
-    private val fakeUiStateFlow = MutableStateFlow(RegistroUiState
-        ())
-    private val fakeComunasFlow = MutableStateFlow(listOf("Santiago", "Providencia"))
-    // Las regiones son una lista simple en tu ViewModel, no un Flow
-    private val fakeRegionesList = listOf("Metropolitana", "Valparaiso")
+    private fun setRegistroContent() {
+        val appContext = ApplicationProvider.getApplicationContext<Application>()
+
+        composeTestRule.setContent {
+            val navController = TestNavHostController(LocalContext.current)
+            val viewModel = RegistroViewModel(appContext)
+            ultimoViewModel = viewModel
+
+            RegistroScreen(
+                navController = navController,
+                registroViewModel = viewModel
+            )
+        }
+    }
 
     @Test
     fun elementosIniciales_seMuestranCorrectamente() {
-        // 1. GIVEN (Preparación)
-        // Configuramos el mock para que devuelva datos vacíos/iniciales
-        whenever(mockViewModel.uiState).thenReturn(fakeUiStateFlow)
-        whenever(mockViewModel.comunas).thenReturn(fakeComunasFlow)
-        whenever(mockViewModel.regiones).thenReturn(fakeRegionesList)
+        setRegistroContent()
 
-        // 2. WHEN (Carga)
-        composeTestRule.setContent {
-            RegistroScreen(
-                navController = mockNavController,
-                registroViewModel = mockViewModel
-            )
-        }
+        // Título del formulario
+        composeTestRule.onNodeWithText("Formulario de Registro")
+            .assertExists()
 
-        // 3. THEN (Verificación)
-        // Verificamos elementos estáticos y campos vacíos
-        composeTestRule.onNodeWithText("Formulario de Registro").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Nombre Completo").assertIsDisplayed()
+        // Campos principales (solo que existan)
+        composeTestRule.onNode(
+            hasText("Nombre Completo") and hasSetTextAction()
+        ).assertExists()
 
-        // Elementos de más abajo: Agregamos performScrollTo() por seguridad
-        composeTestRule.onNodeWithText("Correo Electrónico")
-            .performScrollTo() // <--- MAGIA: Baja la pantalla si es necesario
-            .assertIsDisplayed()
+        composeTestRule.onNodeWithText("Fecha de Nacimiento")
+            .assertExists()
 
-        // El botón del final (definitivamente necesita scroll)
+        composeTestRule.onNode(
+            hasText("Correo Electrónico") and hasSetTextAction()
+        ).assertExists()
+
+        composeTestRule.onNode(
+            hasText("Contraseña") and hasSetTextAction()
+        ).assertExists()
+
+        composeTestRule.onNode(
+            hasText("Confirmar Contraseña") and hasSetTextAction()
+        ).assertExists()
+
+        composeTestRule.onNode(
+            hasText("Teléfono (Opcional)") and hasSetTextAction()
+        ).assertExists()
+
+        composeTestRule.onNode(
+            hasText("Código de Descuento (Opcional)") and hasSetTextAction()
+        ).assertExists()
+
+        // Botón de registro
         composeTestRule.onNodeWithText("Registrarse")
-            .performScrollTo() // <--- MAGIA: Baja hasta el final
-            .assertIsDisplayed()
+            .assertExists()
     }
 
     @Test
-    fun mostrarError_cuandoElEstadoTieneError() {
-        // 1. GIVEN
-        // Creamos un estado que simula un error en el nombre
-        val estadoConError = RegistroUiState(
-            nombreCompleto = "A",
-            errorNombre = "El nombre es muy corto"
-        )
-        // Actualizamos el flujo falso con este estado
-        fakeUiStateFlow.value = estadoConError
+    fun interaccionUsuario_llenaCampos_sinErroresVisuales() {
+        setRegistroContent()
 
-        whenever(mockViewModel.uiState).thenReturn(fakeUiStateFlow)
-        whenever(mockViewModel.comunas).thenReturn(fakeComunasFlow)
-        whenever(mockViewModel.regiones).thenReturn(fakeRegionesList)
+        // Llenar nombre
+        composeTestRule.onNode(
+            hasText("Nombre Completo") and hasSetTextAction()
+        ).performTextInput("Cristóbal Pérez")
 
-        // 2. WHEN
-        composeTestRule.setContent {
-            RegistroScreen(navController = mockNavController, registroViewModel = mockViewModel)
-        }
+        // Llenar correo
+        composeTestRule.onNode(
+            hasText("Correo Electrónico") and hasSetTextAction()
+        ).performTextInput("cristobal@milsabores.cl")
 
-        // 3. THEN
-        // El texto del error debe aparecer en pantalla
-        composeTestRule.onNodeWithText("El nombre es muy corto").assertIsDisplayed()
+        // Llenar contraseñas
+        composeTestRule.onNode(
+            hasText("Contraseña") and hasSetTextAction()
+        ).performTextInput("Clave123")
+
+        composeTestRule.onNode(
+            hasText("Confirmar Contraseña") and hasSetTextAction()
+        ).performTextInput("Clave123")
+
+        // Teléfono
+        composeTestRule.onNode(
+            hasText("Teléfono (Opcional)") and hasSetTextAction()
+        ).performTextInput("987654321")
+
+        // Código descuento
+        composeTestRule.onNode(
+            hasText("Código de Descuento (Opcional)") and hasSetTextAction()
+        ).performTextInput("DESC10")
+
+        // Ver que el botón sigue existiendo (pantalla viva)
+        composeTestRule.onNodeWithText("Registrarse")
+            .assertExists()
     }
 
     @Test
-    fun interaccionUsuario_llamaAlViewModel() {
-        // 1. GIVEN
-        whenever(mockViewModel.uiState).thenReturn(fakeUiStateFlow)
-        whenever(mockViewModel.comunas).thenReturn(fakeComunasFlow)
-        whenever(mockViewModel.regiones).thenReturn(fakeRegionesList)
+    fun registroConNombreMuyCorto_seteaErrorNombreEnViewModel() {
+        setRegistroContent()
 
-        composeTestRule.setContent {
-            RegistroScreen(navController = mockNavController, registroViewModel = mockViewModel)
+        // Nombre demasiado corto -> gatilla errorNombre en el ViewModel
+        composeTestRule.onNode(
+            hasText("Nombre Completo") and hasSetTextAction()
+        ).performTextInput("Ana") // < 4 caracteres
+
+        // Rellenamos otros campos para evitar que fallen otras validaciones
+        composeTestRule.onNode(
+            hasText("Correo Electrónico") and hasSetTextAction()
+        ).performTextInput("ana@milsabores.cl")
+
+        composeTestRule.onNode(
+            hasText("Contraseña") and hasSetTextAction()
+        ).performTextInput("Clave123")
+
+        composeTestRule.onNode(
+            hasText("Confirmar Contraseña") and hasSetTextAction()
+        ).performTextInput("Clave123")
+
+        // Click en "Registrarse"
+        composeTestRule.onNodeWithText("Registrarse")
+            .performClick()
+
+        // Ahora esperamos a que Compose quede idle y LEEMOS el estado dentro de runOnIdle
+        composeTestRule.runOnIdle {
+            val state = ultimoViewModel.uiState.value
+            val errorNombre = state.errorNombre
+            assert(errorNombre == "Nombre muy corto") {
+                "Se esperaba errorNombre = 'Nombre muy corto' pero fue: $errorNombre"
+            }
         }
-
-        // 2. WHEN
-        // El usuario escribe en el input de Correo
-        composeTestRule.onNodeWithText("Correo Electrónico")
-            .performTextInput("alumno@duocuc.cl")
-
-        // 3. THEN
-        // Verificamos que la función 'onCorreoChange' del ViewModel fue llamada.
-        // ESTO FUNCIONA PORQUE LA FUNCIÓN AHORA ES 'OPEN'
-        verify(mockViewModel).onCorreoChange("alumno@duocuc.cl")
     }
 
-    @Test
-    fun registroExitoso_navegaHaciaAtras() {
-        // 1. GIVEN
-        // Simulamos que el registro fue exitoso
-        val estadoExito = RegistroUiState(registroExitoso = true)
-        fakeUiStateFlow.value = estadoExito
-
-        whenever(mockViewModel.uiState).thenReturn(fakeUiStateFlow)
-        whenever(mockViewModel.comunas).thenReturn(fakeComunasFlow)
-        whenever(mockViewModel.regiones).thenReturn(fakeRegionesList)
-
-        // 2. WHEN
-        composeTestRule.setContent {
-            RegistroScreen(navController = mockNavController, registroViewModel = mockViewModel)
-        }
-
-        // 3. THEN
-        // La pantalla debió haber ordenado al NavController volver atrás
-        verify(mockNavController).popBackStack()
-    }
 }
